@@ -26,21 +26,12 @@ func main() {
 		fmt.Printf("couldn't read the given file: %s\n", err)
 		os.Exit(1)
 	}
-	validJSON, err := isValidJSON(string(fileContent))
+	parser := NewParser(fileContent)
+	json, err := parser.Parse()
 	if err != nil {
-		fmt.Printf("couldn't parse the given json file: %s\n", err)
+		fmt.Println(err)
 		os.Exit(1)
 	}
-	if !validJSON {
-		fmt.Println("Invalid JSON")
-		os.Exit(1)
-	}
-	fmt.Println("Valid JSON")
+	fmt.Println(json)
 	os.Exit(0)
-}
-
-// isValidJSON will check the validity of the JSON string
-// on error will return (false, err) otherwise (validity, nil)
-func isValidJSON(json string) (bool, error) {
-	return false, nil
 }
