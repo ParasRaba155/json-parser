@@ -42,12 +42,5 @@ func main() {
 // isValidJSON will check the validity of the JSON string
 // on error will return (false, err) otherwise (validity, nil)
 func isValidJSON(json string) (bool, error) {
-	switch json {
-	case "":
-		return false, nil
-	case "{}":
-		return true, nil
-	default:
-		return false, nil
-	}
+	return false, nil
 }
