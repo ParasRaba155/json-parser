@@ -5,7 +5,9 @@ import (
 	"unicode"
 )
 
-// tokenType represents the different JSON token types
+// tokenType represents the different JSON tokens
+//
+//go:generate stringer -type=tokenType
 type tokenType int
 
 const (
@@ -33,6 +35,8 @@ const (
 	EOF tokenType = 12
 )
 
+// Token containing the value and type of the token, and current pos in the
+// input
 type Token struct {
 	Value string    // Value of the token // TODO: INCORPORATE DIFFERENT TYPES OF TOKENS
 	Type  tokenType // The type of the token
@@ -70,6 +74,8 @@ func (l *Lexer) peekChar() byte {
 	return ch
 }
 
+// nextToken will read the chars from the input, and create appropriate
+// tokens from the input
 func (l *Lexer) nextToken() Token {
 	for {
 		ch := l.nextChar()
@@ -100,6 +106,8 @@ func (l *Lexer) nextToken() Token {
 	}
 }
 
+// readString will try to read the string from the current position
+// Should be called only when the current char is found to be the \" char
 func (l *Lexer) readString() Token {
 	start := l.pos - 1
 	// READ till the end of string or till we encounter EOF
