@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"unicode"
 )
 
@@ -94,6 +95,8 @@ func (l *Lexer) nextToken() Token {
 			return Token{Type: COMMA, Pos: l.pos - 1}
 		case '"':
 			return l.readString()
+		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-':
+			return l.readNumber()
 		case 0:
 			// 0 byte is represented as EOF
 			return Token{Type: EOF, Pos: l.pos}
@@ -122,4 +125,21 @@ func (l *Lexer) readString() Token {
 		return Token{Type: INVALID, Pos: start, Value: "Unterminated string"}
 	}
 	return Token{Type: STRING, Value: string(l.input[start:l.pos]), Pos: start}
+}
+
+func (l *Lexer) readNumber() Token {
+	start := l.pos - 1
+	// read till the end of number
+	for {
+		ch := l.peekChar()
+		if ch == ',' || ch == '}' || ch == 0 {
+			break
+		}
+		l.nextChar()
+	}
+	num, err := strconv.ParseFloat(string(l.input[start:l.pos]), 64)
+	if err != nil {
+		return Token{Type: INVALID, Pos: start, Value: "Invalid number"}
+	}
+	return Token{Type: NUMBER, Value: fmt.Sprintf("%f", num), Pos: start}
 }
