@@ -58,6 +58,7 @@ func NewParser(input []byte) *Parser {
 }
 
 // nextToken the helper function to get the next token from the lexer
+// and it sets the currToken to the next token
 func (p *Parser) nextToken() {
 	p.currToken = p.lexer.nextToken()
 }
@@ -80,27 +81,35 @@ func (p *Parser) Parse() (JSONObj, error) {
 	p.nextToken()
 
 	for p.currToken.Type != RIGHT_CURLY_BRACES {
+		// try and parse the key
 		if p.currToken.Type != STRING {
 			return obj, newJSONParseError("Expected string for key", p.currToken.Pos)
 		}
 		key := p.currToken.Value[1 : len(p.currToken.Value)-1]
 		p.nextToken()
 
+		// After parsing the key, we must have a colon
 		if p.currToken.Type != COLON {
 			return obj, newJSONParseError("Expected ':'", p.currToken.Pos)
 		}
 		p.nextToken()
 
+		// try and parse the value corresponding to current key
 		value, err := p.parseValue()
 		if err != nil {
 			return obj, err
 		}
+		p.nextToken()
 
 		obj.pairs = append(obj.pairs, KeyValue{Key: key, Value: value})
 
+		// TODO: Deal with trailing comma
 		if p.currToken.Type == COMMA {
 			p.nextToken()
-		} else if p.currToken.Type != RIGHT_CURLY_BRACES {
+			continue
+		}
+
+		if p.currToken.Type != RIGHT_CURLY_BRACES {
 			return obj, newJSONParseError("Expected } or ,", p.currToken.Pos)
 		}
 	}
@@ -112,7 +121,6 @@ func (p *Parser) parseValue() (jsonVal, error) {
 	switch p.currToken.Type {
 	case STRING:
 		value := jsonString(p.currToken.Value[1 : len(p.currToken.Value)-1])
-		p.nextToken()
 		return value, nil
 	default:
 		return nil, newJSONParseError("Expected string value", p.currToken.Pos)
