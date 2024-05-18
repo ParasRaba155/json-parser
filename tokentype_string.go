@@ -16,27 +16,28 @@ func _() {
 	_ = x[COLON-5]
 	_ = x[COMMA-7]
 	_ = x[STRING-8]
-	_ = x[NUMBER-9]
-	_ = x[BOOLEAN-10]
-	_ = x[NULL-11]
-	_ = x[EOF-12]
+	_ = x[FLOAT_NUMBER-9]
+	_ = x[INT_NUMBER-10]
+	_ = x[BOOLEAN-11]
+	_ = x[NULL-12]
+	_ = x[EOF-13]
 }
 
 const (
 	_tokenType_name_0 = "INVALIDLEFT_CURLY_BRACESRIGHT_CURLY_BRACESLEFT_SQUARE_BRACKETRIGHT_SQUARE_BRACKETCOLON"
-	_tokenType_name_1 = "COMMASTRINGNUMBERBOOLEANNULLEOF"
+	_tokenType_name_1 = "COMMASTRINGFLOAT_NUMBERINT_NUMBERBOOLEANNULLEOF"
 )
 
 var (
 	_tokenType_index_0 = [...]uint8{0, 7, 24, 42, 61, 81, 86}
-	_tokenType_index_1 = [...]uint8{0, 5, 11, 17, 24, 28, 31}
+	_tokenType_index_1 = [...]uint8{0, 5, 11, 23, 33, 40, 44, 47}
 )
 
 func (i tokenType) String() string {
 	switch {
 	case 0 <= i && i <= 5:
 		return _tokenType_name_0[_tokenType_index_0[i]:_tokenType_index_0[i+1]]
-	case 7 <= i && i <= 12:
+	case 7 <= i && i <= 13:
 		i -= 7
 		return _tokenType_name_1[_tokenType_index_1[i]:_tokenType_index_1[i+1]]
 	default:

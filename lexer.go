@@ -27,13 +27,14 @@ const (
 	COMMA tokenType = 7
 
 	// primitive types tokens
-	STRING  tokenType = 8
-	NUMBER  tokenType = 9
-	BOOLEAN tokenType = 10
-	NULL    tokenType = 11
+	STRING       tokenType = 8
+	FLOAT_NUMBER tokenType = 9
+	INT_NUMBER   tokenType = 10
+	BOOLEAN      tokenType = 11
+	NULL         tokenType = 12
 
 	// special End of file token
-	EOF tokenType = 12
+	EOF tokenType = 13
 )
 
 // Token containing the value and type of the token, and current pos in the
@@ -129,17 +130,30 @@ func (l *Lexer) readString() Token {
 
 func (l *Lexer) readNumber() Token {
 	start := l.pos - 1
+	numType := INT_NUMBER
 	// read till the end of number
 	for {
 		ch := l.peekChar()
+
+		// change the number type
+		if ch == '.' {
+			numType = FLOAT_NUMBER
+		}
+
+		// check for the end of the line or end of file or end of object
 		if ch == ',' || ch == '}' || ch == 0 {
 			break
 		}
 		l.nextChar()
 	}
-	num, err := strconv.ParseFloat(string(l.input[start:l.pos]), 64)
+
+	numStr := string(l.input[start:l.pos])
+
+	// try to parse the number into float, if unsuccessful that means
+	// there is some error
+	_, err := strconv.ParseFloat(numStr, 64)
 	if err != nil {
 		return Token{Type: INVALID, Pos: start, Value: "Invalid number"}
 	}
-	return Token{Type: NUMBER, Value: fmt.Sprintf("%f", num), Pos: start}
+	return Token{Type: numType, Value: numStr, Pos: start}
 }
