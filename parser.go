@@ -10,6 +10,13 @@ type JSONObj struct {
 	pairs []KeyValue
 }
 
+// Value implements jsonVal.
+func (j JSONObj) Value() any {
+	return j.pairs
+}
+
+var _ jsonVal = JSONObj{} // compile time check
+
 // KeyValue is the key and value of each field of json object
 type KeyValue struct {
 	Key   string
@@ -61,6 +68,16 @@ var _ jsonVal = jsonBool(false)
 func (j jsonBool) Value() any {
 	return j
 }
+
+// jsonArray representation of array in go
+type jsonArray []jsonVal
+
+// Value implements jsonVal.
+func (j jsonArray) Value() any {
+	return j
+}
+
+var _ jsonVal = jsonArray{} // compile time check
 
 // Parser for json inputs in byte
 //
@@ -187,8 +204,40 @@ func (p *Parser) parseValue() (jsonVal, error) {
 			return nil, newJSONParseError("Expected a null value", p.currToken.Pos)
 		}
 		return nil, nil
+	case LEFT_SQUARE_BRACKET:
+		return p.parseArray()
+	case LEFT_CURLY_BRACES:
+		return p.Parse()
 	default:
 		// slog.Error("Parse Value", slog.Any("current token", p.currToken))
 		return nil, newJSONParseError("Expected string value", p.currToken.Pos)
 	}
+}
+
+func (p *Parser) parseArray() (jsonVal, error) {
+	var arr jsonArray
+
+	if p.currToken.Type != LEFT_SQUARE_BRACKET {
+		return nil, newJSONParseError("Expected '[' at the start of array", p.getPos())
+	}
+	p.nextToken()
+
+	for p.currToken.Type != RIGHT_SQUARE_BRACKET {
+		value, err := p.parseValue()
+		if err != nil {
+			return nil, err
+		}
+		arr = append(arr, value)
+		p.nextToken()
+
+		if p.currToken.Type == COMMA {
+			p.nextToken()
+			continue
+		}
+		if p.currToken.Type == RIGHT_SQUARE_BRACKET {
+			break
+		}
+		return nil, newJSONParseError("unterminated array", p.getPos())
+	}
+	return arr, nil
 }
