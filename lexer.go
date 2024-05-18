@@ -141,7 +141,7 @@ func (l *Lexer) readNumber() Token {
 		}
 
 		// check for the end of the line or end of file or end of object
-		if ch == ',' || ch == '}' || ch == 0 {
+		if ch == ',' || ch == '}' || ch == 0 || ch == '\n' {
 			break
 		}
 		l.nextChar()

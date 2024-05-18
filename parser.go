@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 // JSONObj represents a valid json object in the Go world
 type JSONObj struct {
@@ -27,6 +30,24 @@ var _ jsonVal = jsonString("") // compile time check for interface impl
 // Value to implement the jsonVal interface
 func (s jsonString) Value() any {
 	return s
+}
+
+type jsonFloat float64
+
+var _ jsonVal = jsonFloat(0.0) // compile time check for interface impl
+
+// Value implements jsonVal.
+func (j jsonFloat) Value() any {
+	return j
+}
+
+type jsonInt int
+
+var _ jsonVal = jsonInt(0)
+
+// Value implements jsonVal.
+func (j jsonInt) Value() any {
+	return j
 }
 
 // Parser for json inputs in byte
@@ -99,9 +120,10 @@ func (p *Parser) Parse() (JSONObj, error) {
 		if err != nil {
 			return obj, err
 		}
-		p.nextToken()
 
 		obj.pairs = append(obj.pairs, KeyValue{Key: key, Value: value})
+		// fmt.Printf("pairs: %+v\n", obj.pairs)
+		p.nextToken()
 
 		// TODO: Deal with trailing comma
 		if p.currToken.Type == COMMA {
@@ -121,6 +143,20 @@ func (p *Parser) parseValue() (jsonVal, error) {
 	switch p.currToken.Type {
 	case STRING:
 		value := jsonString(p.currToken.Value[1 : len(p.currToken.Value)-1])
+		return value, nil
+	case INT_NUMBER:
+		num, err := strconv.Atoi(p.currToken.Value)
+		value := jsonInt(num)
+		if err != nil {
+			return value, newJSONParseError("expected a number", p.currToken.Pos)
+		}
+		return value, nil
+	case FLOAT_NUMBER:
+		num, err := strconv.ParseFloat(p.currToken.Value, 64)
+		value := jsonFloat(num)
+		if err != nil {
+			return value, newJSONParseError("Expected a number", p.currToken.Pos)
+		}
 		return value, nil
 	default:
 		return nil, newJSONParseError("Expected string value", p.currToken.Pos)
