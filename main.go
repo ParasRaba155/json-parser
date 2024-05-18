@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -9,16 +8,13 @@ import (
 
 // TODO: REMOVE debugging messages for fmt and slog
 
-var filepath = flag.String("filepath", "", "the path of the JSON file")
-
 func main() {
-	flag.Parse()
-	if filepath == nil || *filepath == "" {
-		fmt.Println("must provide the filepath")
-		flag.PrintDefaults()
+	if len(os.Args) != 2 {
+		msg := `usage: json-parser <filename>`
+		fmt.Println(msg)
 		os.Exit(1)
 	}
-	file, err := os.Open(*filepath)
+	file, err := os.Open(os.Args[1])
 	if err != nil {
 		fmt.Printf("couldn't open the given file: %s\n", err)
 		os.Exit(1)
