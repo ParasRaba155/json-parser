@@ -32,6 +32,7 @@ func (s jsonString) Value() any {
 	return s
 }
 
+// jsonFloat is the representation of floating numbers in go
 type jsonFloat float64
 
 var _ jsonVal = jsonFloat(0.0) // compile time check for interface impl
@@ -41,12 +42,23 @@ func (j jsonFloat) Value() any {
 	return j
 }
 
+// jsonInt is the representation of int numbers in go
 type jsonInt int
 
 var _ jsonVal = jsonInt(0)
 
 // Value implements jsonVal.
 func (j jsonInt) Value() any {
+	return j
+}
+
+// jsonBool is the representation of boolean in go
+type jsonBool bool
+
+var _ jsonVal = jsonBool(false)
+
+// Value implements jsonVal.
+func (j jsonBool) Value() any {
 	return j
 }
 
@@ -123,12 +135,17 @@ func (p *Parser) Parse() (JSONObj, error) {
 
 		obj.pairs = append(obj.pairs, KeyValue{Key: key, Value: value})
 		// fmt.Printf("pairs: %+v\n", obj.pairs)
+		// fmt.Printf("parser %+v\n", KeyValue{Key: key, Value: value})
 		p.nextToken()
 
 		// TODO: Deal with trailing comma
 		if p.currToken.Type == COMMA {
 			p.nextToken()
 			continue
+		}
+
+		if p.currToken.Type == EOF {
+			break
 		}
 
 		if p.currToken.Type != RIGHT_CURLY_BRACES {
@@ -146,19 +163,32 @@ func (p *Parser) parseValue() (jsonVal, error) {
 		return value, nil
 	case INT_NUMBER:
 		num, err := strconv.Atoi(p.currToken.Value)
-		value := jsonInt(num)
 		if err != nil {
-			return value, newJSONParseError("expected a number", p.currToken.Pos)
+			return nil, newJSONParseError("expected a number", p.currToken.Pos)
 		}
+		value := jsonInt(num)
 		return value, nil
 	case FLOAT_NUMBER:
 		num, err := strconv.ParseFloat(p.currToken.Value, 64)
-		value := jsonFloat(num)
 		if err != nil {
-			return value, newJSONParseError("Expected a number", p.currToken.Pos)
+			return nil, newJSONParseError("Expected a number", p.currToken.Pos)
+		}
+		value := jsonFloat(num)
+		return value, nil
+	case BOOLEAN:
+		bool, err := strconv.ParseBool(p.currToken.Value)
+		value := jsonBool(bool)
+		if err != nil {
+			return value, newJSONParseError("Expected a boolean", p.currToken.Pos)
 		}
 		return value, nil
+	case NULL:
+		if p.currToken.Value != "null" {
+			return nil, newJSONParseError("Expected a null value", p.currToken.Pos)
+		}
+		return nil, nil
 	default:
+		// slog.Error("Parse Value", slog.Any("current token", p.currToken))
 		return nil, newJSONParseError("Expected string value", p.currToken.Pos)
 	}
 }

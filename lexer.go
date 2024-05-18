@@ -1,9 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 	"unicode"
+)
+
+var (
+	trueByte  = []byte("true")
+	falseByte = []byte("false")
+	nullByte  = []byte("null")
 )
 
 // tokenType represents the different JSON tokens
@@ -40,7 +47,7 @@ const (
 // Token containing the value and type of the token, and current pos in the
 // input
 type Token struct {
-	Value string    // Value of the token // TODO: INCORPORATE DIFFERENT TYPES OF TOKENS
+	Value string    // Value of the token
 	Type  tokenType // The type of the token
 	Pos   int       // Position of the token
 }
@@ -98,6 +105,10 @@ func (l *Lexer) nextToken() Token {
 			return l.readString()
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-':
 			return l.readNumber()
+		case 't', 'f':
+			return l.readBoolean()
+		case 'n':
+			return l.readNull()
 		case 0:
 			// 0 byte is represented as EOF
 			return Token{Type: EOF, Pos: l.pos}
@@ -156,4 +167,45 @@ func (l *Lexer) readNumber() Token {
 		return Token{Type: INVALID, Pos: start, Value: "Invalid number"}
 	}
 	return Token{Type: numType, Value: numStr, Pos: start}
+}
+
+func (l *Lexer) readBoolean() Token {
+	start := l.pos - 1
+	// read till the end
+	for {
+		ch := l.peekChar()
+		// check for the end of the line or end of file or end of object
+		if ch == ',' || ch == '}' || ch == 0 || ch == '\n' {
+			break
+		}
+		l.nextChar()
+	}
+	boolByte := l.input[start:l.pos]
+	// slog.Info("FUCK",
+	// 	slog.String("boolByte", string(boolByte)),
+	// 	slog.Bool("is true", bytes.Equal(boolByte, trueByte)),
+	// 	slog.Bool("is false", bytes.Equal(boolByte, falseByte)),
+	// )
+	if !bytes.Equal(boolByte, trueByte) && !bytes.Equal(boolByte, falseByte) {
+		return Token{Type: INVALID, Pos: start, Value: "Expected boolean"}
+	}
+	return Token{Type: BOOLEAN, Value: string(boolByte), Pos: start}
+}
+
+func (l *Lexer) readNull() Token {
+	start := l.pos - 1
+	// read till the end
+	for {
+		ch := l.peekChar()
+		// check for the end of the line or end of file or end of object
+		if ch == ',' || ch == '}' || ch == 0 || ch == '\n' {
+			break
+		}
+		l.nextChar()
+	}
+	found := l.input[start:l.pos]
+	if !bytes.Equal(found, nullByte) {
+		return Token{Type: INVALID, Pos: start, Value: "Expected null"}
+	}
+	return Token{Type: NULL, Value: string(found), Pos: start}
 }

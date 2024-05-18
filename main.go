@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+// TODO: REMOVE debugging messages for fmt and slog
+
 var filepath = flag.String("filepath", "", "the path of the JSON file")
 
 func main() {
@@ -32,6 +34,6 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	fmt.Println(json)
+	fmt.Printf("%+v", json)
 	os.Exit(0)
 }
