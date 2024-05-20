@@ -133,14 +133,14 @@ func (p *Parser) Parse() (JSONObj, error) {
 	for p.currToken.Type != RIGHT_CURLY_BRACES {
 		// try and parse the key
 		if p.currToken.Type != STRING {
-			return obj, newJSONParseError("Expected string for key", p.currToken.Pos)
+			return obj, newJSONParseError("Expected string for key", p.getPos())
 		}
 		key := p.currToken.Value[1 : len(p.currToken.Value)-1]
 		p.nextToken()
 
 		// After parsing the key, we must have a colon
 		if p.currToken.Type != COLON {
-			return obj, newJSONParseError("Expected ':'", p.currToken.Pos)
+			return obj, newJSONParseError("Expected ':'", p.getPos())
 		}
 		p.nextToken()
 
@@ -166,7 +166,7 @@ func (p *Parser) Parse() (JSONObj, error) {
 		}
 
 		if p.currToken.Type != RIGHT_CURLY_BRACES {
-			return obj, newJSONParseError("Expected } or ,", p.currToken.Pos)
+			return obj, newJSONParseError("Expected } or ,", p.getPos())
 		}
 	}
 	return obj, nil
@@ -181,14 +181,14 @@ func (p *Parser) parseValue() (jsonVal, error) {
 	case INT_NUMBER:
 		num, err := strconv.Atoi(p.currToken.Value)
 		if err != nil {
-			return nil, newJSONParseError("expected a number", p.currToken.Pos)
+			return nil, newJSONParseError("expected a number", p.getPos())
 		}
 		value := jsonInt(num)
 		return value, nil
 	case FLOAT_NUMBER:
 		num, err := strconv.ParseFloat(p.currToken.Value, 64)
 		if err != nil {
-			return nil, newJSONParseError("Expected a number", p.currToken.Pos)
+			return nil, newJSONParseError("Expected a number", p.getPos())
 		}
 		value := jsonFloat(num)
 		return value, nil
@@ -196,12 +196,12 @@ func (p *Parser) parseValue() (jsonVal, error) {
 		bool, err := strconv.ParseBool(p.currToken.Value)
 		value := jsonBool(bool)
 		if err != nil {
-			return value, newJSONParseError("Expected a boolean", p.currToken.Pos)
+			return value, newJSONParseError("Expected a boolean", p.getPos())
 		}
 		return value, nil
 	case NULL:
 		if p.currToken.Value != "null" {
-			return nil, newJSONParseError("Expected a null value", p.currToken.Pos)
+			return nil, newJSONParseError("Expected a null value", p.getPos())
 		}
 		return nil, nil
 	case LEFT_SQUARE_BRACKET:
@@ -210,7 +210,7 @@ func (p *Parser) parseValue() (jsonVal, error) {
 		return p.Parse()
 	default:
 		// slog.Error("Parse Value", slog.Any("current token", p.currToken))
-		return nil, newJSONParseError("Expected string value", p.currToken.Pos)
+		return nil, newJSONParseError("Expected string value", p.getPos())
 	}
 }
 

@@ -19,7 +19,7 @@ func TestParsing(t *testing.T) {
 			if d.IsDir() {
 				return nil
 			}
-			t.Run(path, func(t *testing.T) {
+			t.Run("testdata/"+path, func(t *testing.T) {
 				fileContent, err := os.ReadFile("testdata/" + path)
 				if err != nil {
 					t.Errorf(
