@@ -83,8 +83,9 @@ var _ jsonVal = jsonArray{} // compile time check
 //
 // NOTE: Use the `NewParser` to construct the Parser, do not use it directly
 type Parser struct {
-	lexer     *Lexer
-	currToken Token
+	lexer            *Lexer
+	currToken        Token
+	wasPreviousComma bool // To keep track if we have already found comma
 }
 
 // parseError custom error for messaging the json parse errors throughout the parser
@@ -135,6 +136,7 @@ func (p *Parser) Parse() (JSONObj, error) {
 		if p.currToken.Type != STRING {
 			return obj, newJSONParseError("Expected string for key", p.getPos())
 		}
+		p.wasPreviousComma = false
 		key := p.currToken.Value[1 : len(p.currToken.Value)-1]
 		p.nextToken()
 
@@ -142,6 +144,7 @@ func (p *Parser) Parse() (JSONObj, error) {
 		if p.currToken.Type != COLON {
 			return obj, newJSONParseError("Expected ':'", p.getPos())
 		}
+		p.wasPreviousComma = false
 		p.nextToken()
 
 		// try and parse the value corresponding to current key
@@ -151,23 +154,26 @@ func (p *Parser) Parse() (JSONObj, error) {
 		}
 
 		obj.pairs = append(obj.pairs, KeyValue{Key: key, Value: value})
-		// fmt.Printf("pairs: %+v\n", obj.pairs)
-		// fmt.Printf("parser %+v\n", KeyValue{Key: key, Value: value})
 		p.nextToken()
 
 		// TODO: Deal with trailing comma
 		if p.currToken.Type == COMMA {
 			p.nextToken()
+			p.wasPreviousComma = true
 			continue
 		}
 
 		if p.currToken.Type == EOF {
+			p.wasPreviousComma = false
 			break
 		}
 
 		if p.currToken.Type != RIGHT_CURLY_BRACES {
 			return obj, newJSONParseError("Expected } or ,", p.getPos())
 		}
+	}
+	if p.wasPreviousComma {
+		return obj, newJSONParseError("trailing commas are not supported", p.getPos())
 	}
 	return obj, nil
 }
@@ -210,7 +216,7 @@ func (p *Parser) parseValue() (jsonVal, error) {
 		return p.Parse()
 	default:
 		// slog.Error("Parse Value", slog.Any("current token", p.currToken))
-		return nil, newJSONParseError("Expected string value", p.getPos())
+		return nil, newJSONParseError("Expected value", p.getPos())
 	}
 }
 

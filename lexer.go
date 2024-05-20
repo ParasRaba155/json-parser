@@ -123,6 +123,8 @@ func (l *Lexer) nextToken() Token {
 
 // readString will try to read the string from the current position
 // Should be called only when the current char is found to be the \" char
+//
+// NOTE: Will change the position of the input pointer, as it uses 'nextChar`
 func (l *Lexer) readString() Token {
 	start := l.pos - 1
 	// READ till the end of string or till we encounter EOF
