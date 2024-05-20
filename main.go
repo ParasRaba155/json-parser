@@ -6,8 +6,6 @@ import (
 	"os"
 )
 
-// TODO: REMOVE debugging messages for fmt and slog
-
 func main() {
 	if len(os.Args) != 2 {
 		msg := `usage: json-parser <filename>`

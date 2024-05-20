@@ -136,6 +136,10 @@ func (p *Parser) Parse() (JSONObj, error) {
 		if p.currToken.Type != STRING {
 			return obj, newJSONParseError("Expected string for key", p.getPos())
 		}
+
+		// currently to handle the trailing commas not supported, we are keeping
+		// track of these flag `wasPreviousComma` which should be set to true
+		// on encountering the comma and otherwise to false
 		p.wasPreviousComma = false
 		key := p.currToken.Value[1 : len(p.currToken.Value)-1]
 		p.nextToken()
@@ -156,7 +160,6 @@ func (p *Parser) Parse() (JSONObj, error) {
 		obj.pairs = append(obj.pairs, KeyValue{Key: key, Value: value})
 		p.nextToken()
 
-		// TODO: Deal with trailing comma
 		if p.currToken.Type == COMMA {
 			p.nextToken()
 			p.wasPreviousComma = true
@@ -215,11 +218,12 @@ func (p *Parser) parseValue() (jsonVal, error) {
 	case LEFT_CURLY_BRACES:
 		return p.Parse()
 	default:
-		// slog.Error("Parse Value", slog.Any("current token", p.currToken))
 		return nil, newJSONParseError("Expected value", p.getPos())
 	}
 }
 
+// parseArray the helper recursive function to call on encountering an array to be
+// parsed
 func (p *Parser) parseArray() (jsonVal, error) {
 	var arr jsonArray
 
@@ -236,6 +240,7 @@ func (p *Parser) parseArray() (jsonVal, error) {
 		arr = append(arr, value)
 		p.nextToken()
 
+		// TODO: Handle trailing commas in the arrays
 		if p.currToken.Type == COMMA {
 			p.nextToken()
 			continue

@@ -141,6 +141,8 @@ func (l *Lexer) readString() Token {
 	return Token{Type: STRING, Value: string(l.input[start:l.pos]), Pos: start}
 }
 
+// readNumber will try to read the number from the current position
+// will move through the next chars and construct and validate the number
 func (l *Lexer) readNumber() Token {
 	start := l.pos - 1
 	numType := INT_NUMBER
@@ -171,6 +173,7 @@ func (l *Lexer) readNumber() Token {
 	return Token{Type: numType, Value: numStr, Pos: start}
 }
 
+// readBoolean will read through the input bytes and try to parse the booleans
 func (l *Lexer) readBoolean() Token {
 	start := l.pos - 1
 	// read till the end
@@ -183,17 +186,14 @@ func (l *Lexer) readBoolean() Token {
 		l.nextChar()
 	}
 	boolByte := l.input[start:l.pos]
-	// slog.Info("FUCK",
-	// 	slog.String("boolByte", string(boolByte)),
-	// 	slog.Bool("is true", bytes.Equal(boolByte, trueByte)),
-	// 	slog.Bool("is false", bytes.Equal(boolByte, falseByte)),
-	// )
+
 	if !bytes.Equal(boolByte, trueByte) && !bytes.Equal(boolByte, falseByte) {
 		return Token{Type: INVALID, Pos: start, Value: "Expected boolean"}
 	}
 	return Token{Type: BOOLEAN, Value: string(boolByte), Pos: start}
 }
 
+// readNull will read through the input bytes and try to parse the null
 func (l *Lexer) readNull() Token {
 	start := l.pos - 1
 	// read till the end
