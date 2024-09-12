@@ -1,18 +1,33 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 )
 
+var ErrDuplicateKey = errors.New("duplicate key")
+
 // JSONObj represents a valid json object in the Go world
 type JSONObj struct {
 	pairs []KeyValue
+	keys  map[string]struct{}
 }
 
 // Value implements jsonVal.
 func (j JSONObj) Value() any {
 	return j.pairs
+}
+
+func (o *JSONObj) append(pair KeyValue) error {
+	_, ok := o.keys[pair.Key]
+	if ok {
+		return fmt.Errorf("%w '%s'", ErrDuplicateKey, pair.Key)
+	}
+	// add the pair key to keys map
+	o.keys[pair.Key] = struct{}{}
+	o.pairs = append(o.pairs, pair)
+	return nil
 }
 
 var _ jsonVal = JSONObj{} // compile time check
@@ -125,7 +140,7 @@ func (p *Parser) getPos() int {
 // It will return the JSONObj if successfully parsed,otherwise will throw error
 // of type jsonParseError
 func (p *Parser) Parse() (JSONObj, error) {
-	obj := JSONObj{}
+	obj := JSONObj{keys: make(map[string]struct{})}
 	if p.currToken.Type != LEFT_CURLY_BRACES {
 		return obj, newJSONParseError("Expected '{' at the start of the json", p.getPos())
 	}
@@ -157,7 +172,11 @@ func (p *Parser) Parse() (JSONObj, error) {
 			return obj, err
 		}
 
-		obj.pairs = append(obj.pairs, KeyValue{Key: key, Value: value})
+		err = obj.append(KeyValue{Key: key, Value: value})
+		if err != nil {
+			return obj, err
+		}
+
 		p.nextToken()
 
 		if p.currToken.Type == COMMA {
